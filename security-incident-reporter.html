@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Incident Reporter</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-area {
+            border: 3px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e8e8ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .report-output {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .report-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            margin-top: 15px;
+            background: #28a745;
+            padding: 10px 20px;
+            width: auto;
+        }
+
+        .copy-btn:hover {
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .timestamp-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Security Incident Reporter</h1>
+            <p>Analyze security camera footage and generate incident reports</p>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>Instructions:</strong> Upload a security camera photo, copy the timestamp from the photo, analyze the movement and companions of residents, and generate a formatted incident report.
+            </div>
+
+            <div class="form-group">
+                <label for="property">Property *</label>
+                <select id="property" required>
+                    <option value="">-- Select Property --</option>
+                    <option value="Reserve">Reserve</option>
+                    <option value="Harrison">Harrison</option>
+                    <option value="Hermitage">Hermitage</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="locationGroup" style="display: none;">
+                <label for="location">Location *</label>
+                <select id="location">
+                    <option value="">-- Select Location --</option>
+                    <option value="E124 Main Door">E124 Main Door</option>
+                    <option value="E125 Main Door">E125 Main Door</option>
+                    <option value="E125 11th Floor Lounge">E125 11th Floor Lounge</option>
+                    <option value="E124 12th Fl Lounge">E124 12th Fl Lounge</option>
+                    <option value="E125 1st Floor Lounge">E125 1st Floor Lounge</option>
+                    <option value="E124 Conference Room">E124 Conference Room</option>
+                    <option value="E124 1st Fl Recreation Side Door">E124 1st Fl Recreation Side Door</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Security Camera Photo *</label>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <p><strong>Click to upload</strong> or drag and drop</p>
+                    <p style="font-size: 12px; color: #999; margin-top: 5px;">Supports: JPG, PNG, WEBP</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImg" src="" alt="Preview">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div id="timestampStatus" style="padding: 10px; background: #f0f0f0; border-radius: 5px; display: none;">
+                    <strong>📅 Extracted Timestamp:</strong> <span id="extractedTimestamp">Processing...</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="dateTaken">Date Taken *</label>
+                <input type="date" id="dateTaken" required placeholder="Date taken">
+                <small>Select the date when the incident occurred</small>
+            </div>
+
+            <div class="form-group">
+                <label for="issue">Issue *</label>
+                <select id="issue" required>
+                    <option value="">-- Select Issue --</option>
+                    <option value="Tailgating">Tailgating</option>
+                    <option value="Overstaying">Overstaying</option>
+                    <option value="Unauthorized Access">Unauthorized Access</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="customIssueGroup" style="display: none;">
+                <label for="customIssue">Custom Issue (optional)</label>
+                <input type="text" id="customIssue" placeholder="Enter custom issue title">
+            </div>
+
+            <div class="form-group">
+                <label for="analysis">Actions Observed *</label>
+                <textarea id="analysis" rows="4" required placeholder="Example: a resident accessed the lounge. She with her baby and still at the lounge as of 11:14 PM"></textarea>
+                <small>Describe what is observed in the photo</small>
+            </div>
+
+            <div class="form-group">
+                <label for="actionTaken">Action Taken (optional)</label>
+                <input type="text" id="actionTaken" placeholder="Leave blank for default: flagged, saved screenshots, monitoring">
+                <small>Default: "flagged, saved screenshots, monitoring"</small>
+            </div>
+
+            <button class="btn" id="generateBtn" onclick="generateReport()">Generate Report</button>
+
+            <div class="report-output" id="reportOutput">
+                <h3 style="margin-bottom: 15px;">Generated Report:</h3>
+                <div class="report-box" id="reportBox"></div>
+                <button class="btn copy-btn" onclick="copyReport()">📋 Copy to Clipboard</button>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="generatedFilename">📁 Generated Filename:</label>
+                    <input type="text" id="generatedFilename" readonly style="background-color: #f9f9f9; cursor: text;">
+                    <small>Format: [Property]_[Date]_[Location]_[Summary].png</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const issueSelect = document.getElementById('issue');
+        const customIssueGroup = document.getElementById('customIssueGroup');
+        const propertySelect = document.getElementById('property');
+        const locationGroup = document.getElementById('locationGroup');
+        const locationSelect = document.getElementById('location');
+
+        // Show/hide location dropdown based on property selection
+        propertySelect.addEventListener('change', function() {
+            if (this.value === 'Reserve') {
+                locationGroup.style.display = 'block';
+                locationSelect.setAttribute('required', 'required');
+            } else {
+                locationGroup.style.display = 'none';
+                locationSelect.removeAttribute('required');
+                locationSelect.value = ''; // Clear selection
+            }
+        });
+
+        // Show/hide custom issue field based on issue selection
+        issueSelect.addEventListener('change', function() {
+            if (this.value === 'Other') {
+                customIssueGroup.style.display = 'block';
+            } else {
+                customIssueGroup.style.display = 'none';
+            }
+
+            // Populate templates based on issue type
+            const actionsField = document.getElementById('analysis');
+            if (this.value === 'Tailgating') {
+                actionsField.value = 'At 9:12 PM, Lashawn Simmons entered the E125 Main Door with 6 individuals.';
+            } else if (this.value === 'Overstaying') {
+                actionsField.value = 'At 7:42 PM, Steven Gray (Badge ID: 171030) accessed the lounge with one male companion. Both individuals are still in the lounge at the time of reporting';
+            } else if (this.value === 'Unauthorized Access') {
+                actionsField.value = 'At 12:46 AM, Petr Shchepilov and another individual accessed the lounge.';
+            } else {
+                actionsField.value = '';
+            }
+        });
+
+        // Upload area click
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Handle dropped files
+        let extractedTimestampValue = '';
+        function handleFile(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    
+                    // Start OCR to extract timestamp
+                    extractTimestamp(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please upload a valid image file.');
+            }
+        }
+
+        // Extract timestamp from image using OCR
+        function extractTimestamp(imageSrc) {
+            const timestampStatus = document.getElementById('timestampStatus');
+            const timestampDisplay = document.getElementById('extractedTimestamp');
+            
+            // Show processing message
+            timestampStatus.style.display = 'block';
+            timestampDisplay.textContent = 'Processing image...';
+            timestampDisplay.style.color = '#666';
+            
+            Tesseract.recognize(
+                imageSrc,
+                'eng',
+                {
+                    logger: info => {
+                        if (info.status === 'recognizing text') {
+                            timestampDisplay.textContent = `Processing... ${Math.round(info.progress * 100)}%`;
+                        }
+                    }
+                }
+            ).then(({ data: { text } }) => {
+                // Try to find timestamp patterns in the extracted text
+                // Common formats: "2024-02-15 23:45:00 EST", "10:23 PM EST", "23:45:00 EST"
+                
+                // Pattern 1: Full timestamp with date (YYYY-MM-DD HH:MM:SS EST)
+                let timestampMatch = text.match(/\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:EST|EDT)?/i);
+                
+                // Pattern 2: Time only (HH:MM:SS EST or HH:MM AM/PM EST)
+                if (!timestampMatch) {
+                    timestampMatch = text.match(/\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:EST|EDT)?/i);
+                }
+                
+                if (timestampMatch) {
+                    extractedTimestampValue = timestampMatch[0].trim();
+                    timestampDisplay.textContent = extractedTimestampValue;
+                    timestampDisplay.style.color = '#28a745';
+                    timestampDisplay.style.fontWeight = 'bold';
+                } else {
+                    timestampDisplay.textContent = 'N/A';
+                    timestampDisplay.style.color = '#6c757d';
+                    extractedTimestampValue = 'N/A';
+                }
+            }).catch(err => {
+                console.error('OCR Error:', err);
+                timestampDisplay.textContent = 'Error processing image';
+                timestampDisplay.style.color = '#dc3545';
+            });
+        }
+
+        function convertTo12Hour(timeString) {
+            // Remove "EST" if present
+            timeString = timeString.replace(/EST/gi, '').trim();
+            
+            // Try to parse various timestamp formats
+            let hour, minute, period;
+            
+            // Check if already in 12-hour format
+            if (timeString.includes('AM') || timeString.includes('PM')) {
+                return timeString;
+            }
+            
+            // Try to extract time from timestamp (e.g., "2024-02-15 23:45:00")
+            const match = timeString.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                hour = parseInt(match[1]);
+                minute = match[2];
+                
+                period = hour >= 12 ? 'PM' : 'AM';
+                if (hour > 12) hour -= 12;
+                if (hour === 0) hour = 12;
+                
+                return `${hour}:${minute} ${period}`;
+            }
+            
+            return timeString; // Return as-is if can't parse
+        }
+
+        function determinePriority(timeString) {
+            // Extract hour from timestamp
+            const match = timeString.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                let hour = parseInt(match[1]);
+                
+                // Check if it's in PM format
+                if (timeString.includes('PM') && hour !== 12) {
+                    hour += 12;
+                } else if (timeString.includes('AM') && hour === 12) {
+                    hour = 0;
+                }
+                
+                // P2 if between 23:00 (11 PM) and 05:00 (5 AM)
+                if (hour >= 23 || hour < 5) {
+                    return 'P2';
+                }
+            }
+            
+            return 'P3';
+        }
+
+        function generateReport() {
+            const property = document.getElementById('property').value;
+            const location = document.getElementById('location').value;
+            const dateTaken = document.getElementById('dateTaken').value;
+            const analysis = document.getElementById('analysis').value;
+            const issue = document.getElementById('issue').value;
+            const customIssue = document.getElementById('customIssue').value;
+            const actionTaken = document.getElementById('actionTaken').value;
+
+            // Validation - Location only required for Reserve
+            const requiresLocation = property === 'Reserve';
+            if (!property || !dateTaken || !extractedTimestampValue || !analysis || !issue) {
+                alert('Please fill in all required fields (Property, Date Taken, Upload Photo with Timestamp, Issue, and Actions Observed)');
+                return;
+            }
+            
+            if (requiresLocation && !location) {
+                alert('Please select a Location for Reserve property');
+                return;
+            }
+
+            // Determine the issue title
+            let issueTitle = issue;
+            if (issue === 'Other' && customIssue.trim()) {
+                issueTitle = customIssue.trim();
+            }
+
+            // Convert timestamp to 12-hour format and remove EST
+            const time12Hour = convertTo12Hour(extractedTimestampValue);
+            
+            // Determine priority
+            const priority = determinePriority(extractedTimestampValue);
+            
+            // Determine action taken (use custom or default)
+            const action = actionTaken.trim() || 'flagged, saved screenshots, monitoring';
+            
+            // Build report with bullets
+            const locationText = property === 'Reserve' ? location : property;
+            let report = `${priority} - ${issueTitle} at ${locationText} past 11:00 PM\n`;
+            report += `• Action taken - ${action}\n`;
+            report += `• Log Made:\n`;
+            report += `• ${analysis}\n`;
+            report += `• Will continue to monitor.`;
+
+            // Display report
+            document.getElementById('reportBox').textContent = report;
+            document.getElementById('reportOutput').style.display = 'block';
+            
+            // Generate filename
+            const filename = generateFilename(property, location, dateTaken, analysis);
+            document.getElementById('generatedFilename').value = filename;
+            
+            // Scroll to report
+            document.getElementById('reportOutput').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generateFilename(property, location, dateTaken, description) {
+            // Use the manually entered date
+            const dateStr = dateTaken; // Already in YYYY-MM-DD format from date input
+            
+            // Clean location (remove spaces and special chars)
+            // For Reserve, use specific location; for others, use property name
+            const locationPart = location ? location.replace(/\s+/g, '_') : property;
+            
+            // Generate summary from description (first few words, max 4 words)
+            const words = description.trim().split(/\s+/);
+            let summary = words.slice(0, 4).join('_');
+            
+            // Remove special characters and clean up
+            summary = summary.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+            
+            // Limit summary length
+            if (summary.length > 30) {
+                summary = summary.substring(0, 30);
+            }
+            
+            // Build filename: [Property]_[Date]_[Location]_[Summary].png
+            return `${property}_${dateStr}_${locationPart}_${summary}.png`;
+        }
+
+        function copyReport() {
+            const reportText = document.getElementById('reportBox').textContent;
+            navigator.clipboard.writeText(reportText).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+    </script>
+</body>
+</html>
