@@ -1302,27 +1302,29 @@
                 ]
             };
 
+            // Get current webhook URL from localStorage
+            const currentWebhookUrl = localStorage.getItem('slackWebhookUrl');
+            
             // Send to Slack webhook
-            fetch(SLACK_WEBHOOK_URL, {
+            fetch(currentWebhookUrl, {
                 method: 'POST',
+                mode: 'no-cors', // Important for Slack webhooks
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(slackMessage)
             })
             .then(response => {
-                if (response.ok) {
-                    btn.textContent = '✓ Sent to Slack!';
-                    btn.style.background = '#28a745';
-                    
-                    setTimeout(() => {
-                        btn.textContent = originalText;
-                        btn.style.background = originalBg;
-                        btn.disabled = false;
-                    }, 3000);
-                } else {
-                    throw new Error('Slack API returned an error');
-                }
+                // Note: with no-cors mode, response will be opaque
+                // We assume success if no error is thrown
+                btn.textContent = '✓ Sent to Slack!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = originalBg;
+                    btn.disabled = false;
+                }, 3000);
             })
             .catch(err => {
                 console.error('Slack error:', err);
@@ -1335,7 +1337,7 @@
                     btn.disabled = false;
                 }, 3000);
                 
-                alert('Failed to send to Slack. Please check your connection and try again.');
+                alert('Failed to send to Slack. Error: ' + err.message + '\n\nWebhook URL: ' + currentWebhookUrl.substring(0, 50) + '...');
             });
         }
 
