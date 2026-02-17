@@ -1169,13 +1169,14 @@
             report += `• Action taken - ${action}\n`;
             report += `• Log Made:\n`;
             
-            // Convert analysis to bullet format - each line becomes a bullet
+            // Convert analysis to sub-bullet format - each line becomes a sub-bullet
             const analysisLines = analysis.split('\n').filter(line => line.trim());
             analysisLines.forEach(line => {
-                report += `• ${line.trim()}\n`;
+                report += `    ○ ${line.trim()}\n`;
             });
             
-            report += `• Will continue to monitor.`;
+            // Add "Will continue to monitor" as last sub-bullet
+            report += `    ○ Will continue to monitor`;
 
             // Display report
             document.getElementById('reportOutput').textContent = report;
