@@ -1991,8 +1991,15 @@
             isDrawing = true;
             const canvas = document.getElementById('annotation-canvas');
             const rect = canvas.getBoundingClientRect();
+            
+            // Account for canvas scaling
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
             ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.moveTo(x, y);
         }
 
         function draw(e) {
@@ -2002,10 +2009,16 @@
             const color = document.getElementById('drawColor').value;
             const size = document.getElementById('drawSize').value;
             
+            // Account for canvas scaling
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
             ctx.strokeStyle = color;
             ctx.lineWidth = size;
             ctx.lineCap = 'round';
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.lineTo(x, y);
             ctx.stroke();
         }
 
