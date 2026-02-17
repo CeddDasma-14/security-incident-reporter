@@ -955,6 +955,33 @@
                 handleFiles(files);
             });
 
+            // Paste event listener for images
+            document.addEventListener('paste', (e) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+                
+                const files = [];
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        if (file) files.push(file);
+                    }
+                }
+                
+                if (files.length > 0) {
+                    e.preventDefault();
+                    handleFiles(files);
+                    
+                    // Visual feedback
+                    uploadArea.style.borderColor = '#28a745';
+                    uploadArea.style.background = '#d4edda';
+                    setTimeout(() => {
+                        uploadArea.style.borderColor = '#e0e0e0';
+                        uploadArea.style.background = '#f9f9f9';
+                    }, 500);
+                }
+            });
+
             // Property change
             propertySelect.addEventListener('change', function() {
                 const locationGroup = document.getElementById('locationGroup');
@@ -1280,7 +1307,10 @@
             if (uploadedImages.length > 0) {
                 messageText += "*Attached Images:*\n";
                 uploadedImages.forEach((img, index) => {
-                    messageText += `• Filename: \`${img.name}\`\n`;
+                    // Use generated filename if available, otherwise fall back to original name
+                    const filenameElements = document.querySelectorAll('#filenameItems .filename-item');
+                    const generatedFilename = filenameElements[index]?.textContent || img.name;
+                    messageText += `• Filename: \`${generatedFilename}\`\n`;
                 });
                 messageText += "\n";
             }
