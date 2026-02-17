@@ -809,7 +809,10 @@
                 <div class="form-group">
                     <label>Generated Report</label>
                     <div class="report-output" id="reportOutput">No report generated yet...</div>
-                    <button class="btn btn-sm" onclick="copyReport()" style="margin-top: 10px;">📋 Copy Report</button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-sm" onclick="copyReport()" style="flex: 1;">📋 Copy Report</button>
+                        <button class="btn btn-sm" onclick="sendToSlack()" style="flex: 1; background: #4A154B;">💬 Send to Slack</button>
+                    </div>
                 </div>
 
                 <div class="filename-list" id="filenameList" style="display: none;">
@@ -877,6 +880,10 @@
     </div>
 
     <script>
+        // Slack Webhook Configuration
+        // IMPORTANT: Set your Slack webhook URL here (kept private, not committed to git)
+        const SLACK_WEBHOOK_URL = localStorage.getItem('slackWebhookUrl') || '';
+        
         // Global state
         let uploadedImages = [];
         let currentAnnotationIndex = -1;
@@ -1232,6 +1239,103 @@
                 }, 2000);
             }).catch(err => {
                 alert('Failed to copy: ' + err);
+            });
+        }
+
+        // Send report to Slack
+        function sendToSlack() {
+            const reportText = document.getElementById('reportOutput').textContent;
+            if (reportText === 'No report generated yet...') {
+                alert('No report to send. Please generate a report first.');
+                return;
+            }
+
+            // Check if webhook URL is configured
+            if (!SLACK_WEBHOOK_URL) {
+                const webhookUrl = prompt('Please enter your Slack Webhook URL:\n\n(This will be saved locally and used for future reports)');
+                if (webhookUrl && webhookUrl.trim()) {
+                    localStorage.setItem('slackWebhookUrl', webhookUrl.trim());
+                    location.reload(); // Reload to apply new webhook URL
+                    return;
+                } else {
+                    alert('Slack webhook URL is required to send reports to Slack.');
+                    return;
+                }
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            const originalBg = btn.style.background;
+            
+            // Show sending status
+            btn.textContent = '⏳ Sending...';
+            btn.disabled = true;
+
+            // Format the report for Slack
+            const slackMessage = {
+                text: "🚨 *Security Incident Report*",
+                blocks: [
+                    {
+                        type: "header",
+                        text: {
+                            type: "plain_text",
+                            text: "🚨 Security Incident Report",
+                            emoji: true
+                        }
+                    },
+                    {
+                        type: "section",
+                        text: {
+                            type: "mrkdwn",
+                            text: "```\n" + reportText + "\n```"
+                        }
+                    },
+                    {
+                        type: "context",
+                        elements: [
+                            {
+                                type: "mrkdwn",
+                                text: `Posted via Security Incident Reporter • ${new Date().toLocaleString()}`
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            // Send to Slack webhook
+            fetch(SLACK_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(slackMessage)
+            })
+            .then(response => {
+                if (response.ok) {
+                    btn.textContent = '✓ Sent to Slack!';
+                    btn.style.background = '#28a745';
+                    
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = originalBg;
+                        btn.disabled = false;
+                    }, 3000);
+                } else {
+                    throw new Error('Slack API returned an error');
+                }
+            })
+            .catch(err => {
+                console.error('Slack error:', err);
+                btn.textContent = '❌ Failed';
+                btn.style.background = '#dc3545';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = originalBg;
+                    btn.disabled = false;
+                }, 3000);
+                
+                alert('Failed to send to Slack. Please check your connection and try again.');
             });
         }
 
