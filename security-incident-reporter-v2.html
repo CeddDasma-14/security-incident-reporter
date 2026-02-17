@@ -1175,8 +1175,8 @@
                 report += `    ○ ${line.trim()}\n`;
             });
             
-            // Add "Will continue to monitor" as last sub-bullet
-            report += `    ○ Will continue to monitor`;
+            // Remove trailing newline
+            report = report.trimEnd();
 
             // Display report
             document.getElementById('reportOutput').textContent = report;
