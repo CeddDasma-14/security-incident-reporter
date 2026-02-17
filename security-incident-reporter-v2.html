@@ -382,6 +382,275 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+
+        /* ============================================
+           MOBILE RESPONSIVE STYLES
+           ============================================ */
+        
+        /* Tablets and smaller (768px and below) */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .container {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .header p {
+                font-size: 10px;
+            }
+
+            .main-content {
+                flex-direction: column;
+                overflow-y: auto;
+                height: auto;
+            }
+
+            .left-panel,
+            .center-panel,
+            .right-panel {
+                width: 100%;
+                max-height: none;
+                overflow-y: visible;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .right-panel {
+                border-bottom: none;
+            }
+
+            .panel-title {
+                font-size: 13px;
+                padding: 12px 15px;
+            }
+
+            .form-section {
+                padding: 15px;
+            }
+
+            /* Larger touch targets for mobile */
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 48px;
+            }
+
+            .btn-sm {
+                padding: 10px 16px;
+                font-size: 13px;
+                min-height: 44px;
+            }
+
+            input[type="text"],
+            input[type="date"],
+            select,
+            textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px;
+                min-height: 44px;
+            }
+
+            label {
+                font-size: 13px;
+            }
+
+            /* Images gallery - single column on mobile */
+            .images-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .image-item {
+                max-height: 300px;
+            }
+
+            /* Report output */
+            .report-output {
+                font-size: 12px;
+                padding: 12px;
+            }
+
+            /* History items */
+            .history-item {
+                padding: 12px;
+            }
+
+            /* Upload area */
+            .upload-area {
+                min-height: 120px;
+            }
+
+            .upload-icon {
+                font-size: 40px;
+            }
+        }
+
+        /* Mobile phones (480px and below) */
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .header p {
+                font-size: 9px;
+            }
+
+            .panel-title {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            .form-section {
+                padding: 12px;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            /* Buttons stack on very small screens */
+            .btn,
+            .btn-sm {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            /* Template section */
+            .template-section > div {
+                flex-direction: column;
+            }
+
+            .template-section input,
+            .template-section button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            /* Smaller text sizes */
+            .report-output {
+                font-size: 11px;
+                padding: 10px;
+            }
+
+            .filename-item {
+                font-size: 10px;
+                padding: 6px;
+            }
+
+            small {
+                font-size: 10px;
+            }
+        }
+
+        /* Modal responsive styles */
+        @media (max-width: 768px) {
+            #reportModal > div {
+                width: 95%;
+                max-width: none;
+                padding: 20px;
+                max-height: 90vh;
+            }
+
+            #reportModal h2 {
+                font-size: 18px;
+            }
+
+            #reportModal label {
+                font-size: 12px;
+            }
+
+            #modalReportText {
+                font-size: 12px;
+                rows: 8;
+            }
+
+            #modalSummary {
+                font-size: 12px;
+                padding: 12px;
+            }
+
+            #versionHistory {
+                max-height: 120px;
+            }
+
+            /* Modal buttons */
+            #reportModal .btn-sm {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #reportModal > div {
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+                padding: 15px;
+            }
+
+            #reportModal button[onclick="closeReportModal()"] {
+                font-size: 32px;
+            }
+
+            /* Stack modal buttons on small screens */
+            #reportModal > div > div:last-child {
+                flex-direction: column;
+            }
+
+            #reportModal .btn-sm {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Canvas/Annotation modal responsive */
+        @media (max-width: 768px) {
+            #canvas-container {
+                padding: 10px;
+            }
+
+            .canvas-toolbar {
+                flex-wrap: wrap;
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .canvas-toolbar label {
+                font-size: 12px;
+            }
+
+            .canvas-toolbar button {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+
+            #annotation-canvas {
+                max-width: 100%;
+                max-height: 70vh;
+            }
+        }
     </style>
 </head>
 <body>
@@ -520,6 +789,37 @@
             <button class="btn btn-sm" onclick="clearCanvas()">Clear</button>
             <button class="btn btn-sm" onclick="saveAnnotation()">Save</button>
             <button class="btn btn-sm" onclick="closeCanvas()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Report History Modal -->
+    <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #333;">Report Details</h2>
+                <button onclick="closeReportModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #555;">Report Summary (Paragraph Format)</label>
+                <div id="modalSummary" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 15px; font-size: 14px; line-height: 1.6;"></div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #555;">Full Report (Editable)</label>
+                <textarea id="modalReportText" rows="12" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; resize: vertical;"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #555;">Version History</label>
+                <div id="versionHistory" style="max-height: 150px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px;"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-sm" onclick="copyModalReport()" style="background: #28a745;">📋 Copy Report</button>
+                <button class="btn btn-sm" onclick="saveEditedReport()" style="background: #667eea;">💾 Save Changes</button>
+                <button class="btn btn-sm" onclick="closeReportModal()" style="background: #6c757d;">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -789,7 +1089,13 @@
             let report = `${priority} - ${issueTitle} at ${locationText} past 11:00 PM\n`;
             report += `• Action taken - ${action}\n`;
             report += `• Log Made:\n`;
-            report += `• ${analysis}\n`;
+            
+            // Convert analysis to bullet format - each line becomes a bullet
+            const analysisLines = analysis.split('\n').filter(line => line.trim());
+            analysisLines.forEach(line => {
+                report += `• ${line.trim()}\n`;
+            });
+            
             report += `• Will continue to monitor.`;
 
             // Display report
@@ -951,18 +1257,192 @@
             historyList.innerHTML = '';
             history.forEach((item, index) => {
                 const time = new Date(item.timestamp).toLocaleTimeString();
+                
+                // Create paragraph summary from report
+                const summary = generateParagraphSummary(item.report);
+                
                 const div = document.createElement('div');
                 div.className = 'history-item';
+                div.style.cursor = 'pointer';
                 div.innerHTML = `
                     <div class="time">${time}</div>
-                    <div class="preview">${item.property} - ${item.issue}</div>
-                    <div style="font-size: 10px; color: #999; margin-top: 3px;">${item.imageCount} image(s)</div>
+                    <div class="preview" style="font-size: 11px; line-height: 1.4;">${summary}</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 3px;">${item.imageCount} image(s) • Click to view/edit</div>
                 `;
-                div.onclick = () => viewHistoryItem(index);
+                div.onclick = () => openReportModal(index);
                 historyList.appendChild(div);
             });
         }
+        
+        function generateParagraphSummary(report) {
+            // Extract time and description from report
+            const lines = report.split('\n');
+            let timeInfo = '';
+            let description = '';
+            
+            // Find the line with time (AM/PM)
+            for (let line of lines) {
+                if (line.includes('AM') || line.includes('PM')) {
+                    const timeMatch = line.match(/At\s+(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeInfo = timeMatch[1];
+                    }
+                    // Get the description part
+                    description = line.replace(/^•\s*/, '').replace(/At\s+\d{1,2}:\d{2}\s*(?:AM|PM),?\s*/i, '').trim();
+                    break;
+                }
+            }
+            
+            // If we found time and description, format as paragraph
+            if (timeInfo && description) {
+                // Truncate if too long
+                if (description.length > 80) {
+                    description = description.substring(0, 80) + '...';
+                }
+                return `At ${timeInfo}, ${description}`;
+            }
+            
+            // Fallback to first 80 chars of report
+            return report.substring(0, 80) + '...';
+        }
 
+        let currentEditingIndex = -1;
+        
+        function openReportModal(index) {
+            currentEditingIndex = index;
+            const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            const item = todayHistory[index];
+            
+            // Generate paragraph summary
+            const summary = generateParagraphSummary(item.report);
+            document.getElementById('modalSummary').textContent = summary;
+            
+            // Load current report
+            document.getElementById('modalReportText').value = item.report;
+            
+            // Load version history
+            loadVersionHistory(item);
+            
+            // Show modal
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            currentEditingIndex = -1;
+        }
+        
+        function loadVersionHistory(item) {
+            const versionHistoryDiv = document.getElementById('versionHistory');
+            
+            if (!item.versions || item.versions.length === 0) {
+                versionHistoryDiv.innerHTML = '<div style="text-align: center; color: #999; font-size: 11px; padding: 10px;">No version history</div>';
+                return;
+            }
+            
+            versionHistoryDiv.innerHTML = '';
+            item.versions.forEach((version, index) => {
+                const versionDiv = document.createElement('div');
+                versionDiv.style.cssText = 'padding: 8px; margin-bottom: 5px; background: white; border-radius: 5px; font-size: 11px; border-left: 3px solid #667eea;';
+                
+                const timestamp = new Date(version.timestamp).toLocaleString();
+                versionDiv.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 3px;">Version ${index + 1} - ${timestamp}</div>
+                    <div style="color: #666; white-space: pre-wrap; max-height: 60px; overflow: hidden;">${version.report.substring(0, 100)}...</div>
+                    <button class="btn btn-sm" onclick="restoreVersion(${index})" style="margin-top: 5px; font-size: 10px; padding: 3px 8px;">Restore</button>
+                `;
+                versionHistoryDiv.appendChild(versionDiv);
+            });
+        }
+        
+        function restoreVersion(versionIndex) {
+            const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            const item = todayHistory[currentEditingIndex];
+            
+            if (item.versions && item.versions[versionIndex]) {
+                document.getElementById('modalReportText').value = item.versions[versionIndex].report;
+                alert('Version restored to editor. Click "Save Changes" to apply.');
+            }
+        }
+        
+        function copyModalReport() {
+            const reportText = document.getElementById('modalReportText').value;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert('✓ Report copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+        
+        function saveEditedReport() {
+            const newReportText = document.getElementById('modalReportText').value.trim();
+            
+            if (!newReportText) {
+                alert('Report cannot be empty');
+                return;
+            }
+            
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            
+            // Find the actual index in full history
+            let actualIndex = -1;
+            let todayCount = 0;
+            for (let i = 0; i < history.length; i++) {
+                if (new Date(history[i].timestamp).toDateString() === today) {
+                    if (todayCount === currentEditingIndex) {
+                        actualIndex = i;
+                        break;
+                    }
+                    todayCount++;
+                }
+            }
+            
+            if (actualIndex === -1) {
+                alert('Error finding report in history');
+                return;
+            }
+            
+            const item = history[actualIndex];
+            
+            // Initialize versions array if it doesn't exist
+            if (!item.versions) {
+                item.versions = [];
+            }
+            
+            // Save current version to history before updating
+            item.versions.unshift({
+                timestamp: new Date().toISOString(),
+                report: item.report
+            });
+            
+            // Keep only last 10 versions
+            if (item.versions.length > 10) {
+                item.versions = item.versions.slice(0, 10);
+            }
+            
+            // Update the report
+            item.report = newReportText;
+            item.lastEdited = new Date().toISOString();
+            
+            // Save back to localStorage
+            localStorage.setItem('incidentHistory', JSON.stringify(history));
+            
+            // Refresh displays
+            loadHistory();
+            loadVersionHistory(item);
+            
+            // Update summary
+            const summary = generateParagraphSummary(newReportText);
+            document.getElementById('modalSummary').textContent = summary;
+            
+            alert('✓ Report updated successfully!');
+        }
+        
         function viewHistoryItem(index) {
             const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
             const today = new Date().toDateString();
