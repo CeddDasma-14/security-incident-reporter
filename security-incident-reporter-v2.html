@@ -387,18 +387,50 @@
            MOBILE RESPONSIVE STYLES
            ============================================ */
         
+        /* Mobile Tab Navigation */
+        .mobile-tabs {
+            display: none;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .mobile-tab {
+            display: inline-block;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .mobile-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .mobile-tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
         /* Tablets and smaller (768px and below) */
         @media (max-width: 768px) {
             body {
-                padding: 5px;
-                overflow-y: auto;
-                height: auto;
-                min-height: 100vh;
+                padding: 0;
+                overflow: hidden;
+                height: 100vh;
             }
 
             .container {
-                height: auto;
-                min-height: 100vh;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
             }
 
             .header h1 {
@@ -409,24 +441,38 @@
                 font-size: 10px;
             }
 
+            .mobile-tabs {
+                display: block;
+                flex-shrink: 0;
+            }
+
             .main-content {
                 flex-direction: column;
-                overflow-y: auto;
+                overflow: hidden;
                 height: auto;
+                flex: 1;
+                position: relative;
             }
 
             .left-panel,
             .center-panel,
             .right-panel {
+                display: none;
                 width: 100%;
                 max-height: none;
-                overflow-y: visible;
+                height: 100%;
+                overflow-y: auto;
                 border-right: none;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: none;
+                position: absolute;
+                top: 0;
+                left: 0;
             }
 
-            .right-panel {
-                border-bottom: none;
+            .left-panel.active,
+            .center-panel.active,
+            .right-panel.active {
+                display: block;
             }
 
             .panel-title {
@@ -660,9 +706,16 @@
             <p>Multi-image analysis • Custom templates • Report history • Image annotation</p>
         </div>
 
+        <!-- Mobile Tab Navigation -->
+        <div class="mobile-tabs">
+            <button class="mobile-tab active" onclick="switchMobileTab('form')">📋 Form</button>
+            <button class="mobile-tab" onclick="switchMobileTab('output')">📷 Output</button>
+            <button class="mobile-tab" onclick="switchMobileTab('history')">📜 History</button>
+        </div>
+
         <div class="main-content">
             <!-- LEFT PANEL: Form Inputs -->
-            <div class="left-panel">
+            <div class="left-panel active">
                 <div class="panel-title">📋 Report Details</div>
                 <div class="form-section">
                     <div class="form-group">
@@ -837,6 +890,25 @@
             initializeEventListeners();
             setTodayDate();
         });
+
+        // Mobile Tab Switching
+        function switchMobileTab(tab) {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.left-panel, .center-panel, .right-panel').forEach(p => p.classList.remove('active'));
+            
+            // Add active class to selected tab and panel
+            if (tab === 'form') {
+                document.querySelector('.mobile-tab:nth-child(1)').classList.add('active');
+                document.querySelector('.left-panel').classList.add('active');
+            } else if (tab === 'output') {
+                document.querySelector('.mobile-tab:nth-child(2)').classList.add('active');
+                document.querySelector('.center-panel').classList.add('active');
+            } else if (tab === 'history') {
+                document.querySelector('.mobile-tab:nth-child(3)').classList.add('active');
+                document.querySelector('.right-panel').classList.add('active');
+            }
+        }
 
         function setTodayDate() {
             const today = new Date().toISOString().split('T')[0];
