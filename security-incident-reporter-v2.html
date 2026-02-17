@@ -1272,35 +1272,59 @@
             btn.textContent = '⏳ Sending...';
             btn.disabled = true;
 
+            // Build blocks array with report and images
+            const blocks = [
+                {
+                    type: "header",
+                    text: {
+                        type: "plain_text",
+                        text: "🚨 Security Incident Report",
+                        emoji: true
+                    }
+                },
+                {
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: "```\n" + reportText + "\n```"
+                    }
+                }
+            ];
+            
+            // Add images with filenames
+            uploadedImages.forEach((img, index) => {
+                // Add filename label
+                blocks.push({
+                    type: "section",
+                    text: {
+                        type: "mrkdwn",
+                        text: `*Filename:* \`${img.name}\``
+                    }
+                });
+                
+                // Add image
+                blocks.push({
+                    type: "image",
+                    image_url: img.src,
+                    alt_text: img.name
+                });
+            });
+            
+            // Add footer
+            blocks.push({
+                type: "context",
+                elements: [
+                    {
+                        type: "mrkdwn",
+                        text: `Posted via Security Incident Reporter • ${new Date().toLocaleString()}`
+                    }
+                ]
+            });
+            
             // Format the report for Slack
             const slackMessage = {
                 text: "🚨 *Security Incident Report*",
-                blocks: [
-                    {
-                        type: "header",
-                        text: {
-                            type: "plain_text",
-                            text: "🚨 Security Incident Report",
-                            emoji: true
-                        }
-                    },
-                    {
-                        type: "section",
-                        text: {
-                            type: "mrkdwn",
-                            text: "```\n" + reportText + "\n```"
-                        }
-                    },
-                    {
-                        type: "context",
-                        elements: [
-                            {
-                                type: "mrkdwn",
-                                text: `Posted via Security Incident Reporter • ${new Date().toLocaleString()}`
-                            }
-                        ]
-                    }
-                ]
+                blocks: blocks
             };
 
             // Get current webhook URL from localStorage
