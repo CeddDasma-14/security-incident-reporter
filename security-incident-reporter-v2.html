@@ -1997,7 +1997,8 @@
 
         function draw(e) {
             if (!isDrawing) return;
-            const canvas = document.getElementById('annotation-canvas');            const rect = e.target.getBoundingClientRect();
+            const canvas = document.getElementById('annotation-canvas');
+            const rect = canvas.getBoundingClientRect();
             const color = document.getElementById('drawColor').value;
             const size = document.getElementById('drawSize').value;
             
