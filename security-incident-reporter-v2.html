@@ -880,9 +880,11 @@
     </div>
 
     <script>
-        // Slack Webhook Configuration
-        // IMPORTANT: Set your Slack webhook URL here (kept private, not committed to git)
+        // Slack Configuration
+        // IMPORTANT: Slack credentials stored in localStorage (kept private, not committed to git)
         const SLACK_WEBHOOK_URL = localStorage.getItem('slackWebhookUrl') || '';
+        const SLACK_BOT_TOKEN = localStorage.getItem('slackBotToken') || '';
+        const SLACK_CHANNEL_ID = localStorage.getItem('slackChannelId') || '';
         
         // Global state
         let uploadedImages = [];
@@ -1243,70 +1245,106 @@
             });
         }
 
-        // Send report to Slack
-        function sendToSlack() {
+        // Send report to Slack with Bot API (supports image uploads)
+        async function sendToSlack() {
             const reportText = document.getElementById('reportOutput').textContent;
             if (reportText === 'No report generated yet...') {
                 alert('No report to send. Please generate a report first.');
                 return;
             }
 
-            // Check if webhook URL is configured
-            if (!SLACK_WEBHOOK_URL) {
-                const webhookUrl = prompt('Please enter your Slack Webhook URL:\n\n(This will be saved locally and used for future reports)');
-                if (webhookUrl && webhookUrl.trim()) {
-                    localStorage.setItem('slackWebhookUrl', webhookUrl.trim());
-                    location.reload(); // Reload to apply new webhook URL
-                    return;
-                } else {
-                    alert('Slack webhook URL is required to send reports to Slack.');
-                    return;
-                }
-            }
-
             const btn = event.target;
             const originalText = btn.textContent;
             const originalBg = btn.style.background;
+
+            // Check if Bot token and channel are configured
+            if (!SLACK_BOT_TOKEN || !SLACK_CHANNEL_ID) {
+                const setupNeeded = !SLACK_BOT_TOKEN ? 'Bot Token' : 'Channel ID';
+                const botToken = prompt(`Please enter your Slack Bot Token (xoxb-...):\n\n(This will be saved locally)`);
+                if (botToken && botToken.trim()) {
+                    localStorage.setItem('slackBotToken', botToken.trim());
+                }
+                
+                const channelId = prompt(`Please enter your Slack Channel ID:\n\n(e.g., C01234ABCDE - find it in channel details)\n\n(This will be saved locally)`);
+                if (channelId && channelId.trim()) {
+                    localStorage.setItem('slackChannelId', channelId.trim());
+                }
+                
+                if (botToken && channelId) {
+                    alert('Slack credentials saved! Please click "Send to Slack" again.');
+                    location.reload();
+                }
+                return;
+            }
             
             // Show sending status
             btn.textContent = '⏳ Sending...';
             btn.disabled = true;
 
-            // Build message with report and filenames
-            let messageText = "🚨 *Security Incident Report*\n\n";
-            messageText += "```\n" + reportText + "\n```\n\n";
-            
-            // Add filenames if there are images
-            if (uploadedImages.length > 0) {
-                messageText += "*Attached Images:*\n";
-                uploadedImages.forEach((img, index) => {
-                    messageText += `• Filename: \`${img.name}\`\n`;
-                });
-                messageText += "\n";
-            }
-            
-            messageText += `_Posted via Security Incident Reporter • ${new Date().toLocaleString()}_`;
-            
-            // Format the report for Slack
-            const slackMessage = {
-                text: messageText
-            };
+            try {
+                // Get token and channel from localStorage (fresh values)
+                const botToken = localStorage.getItem('slackBotToken');
+                const channelId = localStorage.getItem('slackChannelId');
 
-            // Get current webhook URL from localStorage
-            const currentWebhookUrl = localStorage.getItem('slackWebhookUrl');
-            
-            // Send to Slack webhook
-            fetch(currentWebhookUrl, {
-                method: 'POST',
-                mode: 'no-cors', // Important for Slack webhooks
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(slackMessage)
-            })
-            .then(response => {
-                // Note: with no-cors mode, response will be opaque
-                // We assume success if no error is thrown
+                // Step 1: Post the report text message
+                let messageText = "🚨 *Security Incident Report*\n\n```\n" + reportText + "\n```";
+                
+                const messageResponse = await fetch('https://slack.com/api/chat.postMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${botToken}`
+                    },
+                    body: JSON.stringify({
+                        channel: channelId,
+                        text: messageText,
+                        mrkdwn: true
+                    })
+                });
+
+                const messageData = await messageResponse.json();
+                
+                if (!messageData.ok) {
+                    throw new Error(messageData.error || 'Failed to post message');
+                }
+
+                // Step 2: Upload images if any
+                if (uploadedImages.length > 0) {
+                    for (const img of uploadedImages) {
+                        // Convert base64 to blob
+                        const base64Data = img.src.split(',')[1];
+                        const byteCharacters = atob(base64Data);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+                        // Upload to Slack
+                        const formData = new FormData();
+                        formData.append('file', blob, img.name);
+                        formData.append('channels', channelId);
+                        formData.append('title', `Filename: ${img.name}`);
+                        formData.append('initial_comment', `📎 *Filename:* \`${img.name}\``);
+
+                        const uploadResponse = await fetch('https://slack.com/api/files.upload', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${botToken}`
+                            },
+                            body: formData
+                        });
+
+                        const uploadData = await uploadResponse.json();
+                        
+                        if (!uploadData.ok) {
+                            console.error('Failed to upload image:', img.name, uploadData.error);
+                        }
+                    }
+                }
+
+                // Success!
                 btn.textContent = '✓ Sent to Slack!';
                 btn.style.background = '#28a745';
                 
@@ -1315,8 +1353,8 @@
                     btn.style.background = originalBg;
                     btn.disabled = false;
                 }, 3000);
-            })
-            .catch(err => {
+
+            } catch (err) {
                 console.error('Slack error:', err);
                 btn.textContent = '❌ Failed';
                 btn.style.background = '#dc3545';
@@ -1327,9 +1365,10 @@
                     btn.disabled = false;
                 }, 3000);
                 
-                alert('Failed to send to Slack. Error: ' + err.message + '\n\nWebhook URL: ' + currentWebhookUrl.substring(0, 50) + '...');
-            });
+                alert('Failed to send to Slack.\n\nError: ' + err.message + '\n\nPlease check:\n1. Bot token is correct\n2. Channel ID is correct\n3. Bot is invited to the channel\n4. Bot has chat:write and files:write permissions');
+            }
         }
+
 
         // Template Management
         function saveTemplate() {
