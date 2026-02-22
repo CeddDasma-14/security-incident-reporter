@@ -5,7 +5,7 @@ A comprehensive web-based tool for security operations teams to analyze security
 ![Version](https://img.shields.io/badge/version-2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-## 🚀 Features
+## 🚀 Features 
 
 ### Core Functionality
 - **📸 Multi-Image Upload** - Drag & drop or click to upload multiple security camera images
