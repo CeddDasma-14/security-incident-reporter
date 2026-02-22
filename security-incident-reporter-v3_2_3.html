@@ -1,0 +1,2289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Incident Reporter v2</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --container-bg: #ffffff;
+            --header-gradient-start: #1e3c72;
+            --header-gradient-end: #2a5298;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #e0e0e0;
+            --input-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --upload-area-bg: #f9f9f9;
+            --upload-area-hover: #f0f0ff;
+            --report-output-bg: #f8f9fa;
+            --history-item-bg: #f8f9fa;
+            --history-item-hover: #e9ecef;
+            --alert-warning-bg: #fff3cd;
+            --alert-warning-border: #ffc107;
+            --alert-warning-text: #856404;
+            --modal-bg: #ffffff;
+            --scrollbar-track: #f1f1f1;
+            --scrollbar-thumb: #888888;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --container-bg: #0f1419;
+            --header-gradient-start: #0d1117;
+            --header-gradient-end: #161b22;
+            --text-primary: #e6e6e6;
+            --text-secondary: #b3b3b3;
+            --text-muted: #808080;
+            --border-color: #30363d;
+            --input-bg: #1c2128;
+            --panel-bg: #0f1419;
+            --upload-area-bg: #161b22;
+            --upload-area-hover: #1c2128;
+            --report-output-bg: #161b22;
+            --history-item-bg: #161b22;
+            --history-item-hover: #1c2128;
+            --alert-warning-bg: #3d3000;
+            --alert-warning-border: #8b7000;
+            --alert-warning-text: #ffcc00;
+            --modal-bg: #0f1419;
+            --scrollbar-track: #1c2128;
+            --scrollbar-thumb: #30363d;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            height: 100vh;
+            overflow: hidden;
+            padding: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            height: 100%;
+            background: var(--container-bg);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-content {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .theme-toggle {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .theme-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .theme-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .theme-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr 300px;
+            gap: 15px;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .left-panel, .center-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-section {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-size: 12px;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: inherit;
+            transition: border-color 0.3s, background 0.3s, color 0.3s;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        small {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--upload-area-bg);
+            color: var(--text-primary);
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: var(--upload-area-hover);
+        }
+        
+        .upload-area p {
+            color: var(--text-primary);
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .images-gallery {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+            max-height: 200px;
+        }
+
+        .image-item {
+            position: relative;
+            min-width: 150px;
+            flex-shrink: 0;
+        }
+
+        .image-item img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid var(--border-color);
+        }
+
+        .image-item.selected img {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .remove-img {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .annotate-btn {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        #canvas-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #annotation-canvas {
+            max-width: 90%;
+            max-height: 80vh;
+            border: 2px solid white;
+        }
+
+        .canvas-toolbar {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .report-output {
+            background: var(--report-output-bg);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 11px;
+            overflow-y: auto;
+            max-height: 200px;
+            color: var(--text-primary);
+            transition: background 0.3s ease;
+        }
+
+        .history-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .history-item {
+            background: var(--history-item-bg);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .history-item:hover {
+            background: var(--history-item-hover);
+        }
+
+        .history-item .time {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .history-item .preview {
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .filename-list {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .filename-item {
+            font-size: 11px;
+            padding: 5px;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        .alert-warning {
+            background: var(--alert-warning-bg);
+            border: 1px solid var(--alert-warning-border);
+            color: var(--alert-warning-text);
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .template-section {
+            margin-bottom: 15px;
+        }
+
+        .template-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 5px;
+        }
+
+        .template-item {
+            padding: 8px;
+            background: var(--history-item-bg);
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+        }
+
+        .template-item:hover {
+            background: var(--history-item-hover);
+        }
+
+        .delete-template {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* ============================================
+           MOBILE RESPONSIVE STYLES
+           ============================================ */
+        
+        /* Mobile Tab Navigation */
+        .mobile-tabs {
+            display: none;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .mobile-tab {
+            display: inline-block;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .mobile-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .mobile-tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Tablets and smaller (768px and below) */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                overflow: hidden;
+                height: 100vh;
+            }
+
+            .container {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .header p {
+                font-size: 10px;
+            }
+
+            .mobile-tabs {
+                display: block;
+                flex-shrink: 0;
+            }
+
+            .main-content {
+                flex-direction: column;
+                overflow: hidden;
+                height: auto;
+                flex: 1;
+                position: relative;
+            }
+
+            .left-panel,
+            .center-panel,
+            .right-panel {
+                display: none;
+                width: 100%;
+                max-height: none;
+                height: 100%;
+                overflow-y: auto;
+                border-right: none;
+                border-bottom: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+
+            .left-panel.active,
+            .center-panel.active,
+            .right-panel.active {
+                display: block;
+            }
+
+            .panel-title {
+                font-size: 13px;
+                padding: 12px 15px;
+            }
+
+            .form-section {
+                padding: 15px;
+            }
+
+            /* Larger touch targets for mobile */
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 48px;
+            }
+
+            .btn-sm {
+                padding: 10px 16px;
+                font-size: 13px;
+                min-height: 44px;
+            }
+
+            input[type="text"],
+            input[type="date"],
+            select,
+            textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 12px;
+                min-height: 44px;
+            }
+
+            label {
+                font-size: 13px;
+            }
+
+            /* Images gallery - single column on mobile */
+            .images-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .image-item {
+                max-height: 300px;
+            }
+
+            /* Report output */
+            .report-output {
+                font-size: 12px;
+                padding: 12px;
+            }
+
+            /* History items */
+            .history-item {
+                padding: 12px;
+            }
+
+            /* Upload area */
+            .upload-area {
+                min-height: 120px;
+            }
+
+            .upload-icon {
+                font-size: 40px;
+            }
+        }
+
+        /* Mobile phones (480px and below) */
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .header p {
+                font-size: 9px;
+            }
+
+            .panel-title {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            .form-section {
+                padding: 12px;
+            }
+
+            .form-group {
+                margin-bottom: 12px;
+            }
+
+            /* Buttons stack on very small screens */
+            .btn,
+            .btn-sm {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            /* Template section */
+            .template-section > div {
+                flex-direction: column;
+            }
+
+            .template-section input,
+            .template-section button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            /* Smaller text sizes */
+            .report-output {
+                font-size: 11px;
+                padding: 10px;
+            }
+
+            .filename-item {
+                font-size: 10px;
+                padding: 6px;
+            }
+
+            small {
+                font-size: 10px;
+            }
+        }
+
+        /* Modal responsive styles */
+        @media (max-width: 768px) {
+            #reportModal > div {
+                width: 95%;
+                max-width: none;
+                padding: 20px;
+                max-height: 90vh;
+            }
+
+            #reportModal h2 {
+                font-size: 18px;
+            }
+
+            #reportModal label {
+                font-size: 12px;
+            }
+
+            #modalReportText {
+                font-size: 12px;
+                rows: 8;
+            }
+
+            #modalSummary {
+                font-size: 12px;
+                padding: 12px;
+            }
+
+            #versionHistory {
+                max-height: 120px;
+            }
+
+            /* Modal buttons */
+            #reportModal .btn-sm {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #reportModal > div {
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+                padding: 15px;
+            }
+
+            #reportModal button[onclick="closeReportModal()"] {
+                font-size: 32px;
+            }
+
+            /* Stack modal buttons on small screens */
+            #reportModal > div > div:last-child {
+                flex-direction: column;
+            }
+
+            #reportModal .btn-sm {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Canvas/Annotation modal responsive */
+        @media (max-width: 768px) {
+            #canvas-container {
+                padding: 10px;
+            }
+
+            .canvas-toolbar {
+                flex-wrap: wrap;
+                padding: 10px;
+                gap: 8px;
+            }
+
+            .canvas-toolbar label {
+                font-size: 12px;
+            }
+
+            .canvas-toolbar button {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+
+            #annotation-canvas {
+                max-width: 100%;
+                max-height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="theme-toggle">
+                <button class="theme-btn" id="lightThemeBtn" onclick="setTheme('light')">☀️ Light</button>
+                <button class="theme-btn" id="darkThemeBtn" onclick="setTheme('dark')">🌙 Dark</button>
+                <button class="theme-btn active" id="autoThemeBtn" onclick="setTheme('auto')">💻 Auto</button>
+            </div>
+            <div class="header-content">
+                <h1>🔒 Security Incident Reporter v2</h1>
+                <p>Multi-image analysis • Custom templates • Report history • Image annotation</p>
+            </div>
+            <div style="width: 200px;"></div> <!-- Spacer for centering -->
+        </div>
+
+        <!-- Mobile Tab Navigation -->
+        <div class="mobile-tabs">
+            <button class="mobile-tab active" onclick="switchMobileTab('form')">📋 Form</button>
+            <button class="mobile-tab" onclick="switchMobileTab('output')">📷 Output</button>
+            <button class="mobile-tab" onclick="switchMobileTab('history')">📜 History</button>
+        </div>
+
+        <div class="main-content">
+            <!-- LEFT PANEL: Form Inputs -->
+            <div class="left-panel active">
+                <div class="panel-title">📋 Report Details</div>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="property">Property *</label>
+                        <select id="property" required>
+                            <option value="">-- Select Property --</option>
+                            <option value="Reserve">Reserve</option>
+                            <option value="Harrison">Harrison</option>
+                            <option value="Hermitage">Hermitage</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="locationGroup" style="display: none;">
+                        <label for="location">Location *</label>
+                        <select id="location">
+                            <option value="">-- Select Location --</option>
+                            <option value="E124 Main Door">E124 Main Door</option>
+                            <option value="E125 Main Door">E125 Main Door</option>
+                            <option value="E125 11th Floor Lounge">E125 11th Floor Lounge</option>
+                            <option value="E124 12th Fl Lounge">E124 12th Fl Lounge</option>
+                            <option value="E125 1st Floor Lounge">E125 1st Floor Lounge</option>
+                            <option value="E124 Conference Room">E124 Conference Room</option>
+                            <option value="E124 1st Fl Recreation Side Door">E124 1st Fl Recreation Side Door</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateTaken">Date Taken *</label>
+                        <input type="date" id="dateTaken" required>
+                        <small>Select incident date</small>
+                    </div>
+
+                    <div id="timeWarning" class="alert alert-warning" style="display: none;"></div>
+
+                    <div class="form-group">
+                        <label for="issue">Issue *</label>
+                        <select id="issue" required>
+                            <option value="">-- Select Issue --</option>
+                            <option value="Tailgating">Tailgating</option>
+                            <option value="Overstaying">Overstaying</option>
+                            <option value="Unauthorized Access">Unauthorized Access</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="customIssueGroup" style="display: none;">
+                        <label for="customIssue">Custom Issue</label>
+                        <input type="text" id="customIssue" placeholder="Enter custom issue">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="analysis">Actions Observed *</label>
+                        <textarea id="analysis" rows="3" required placeholder="Describe what happened..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="actionTaken">Action Taken</label>
+                        <input type="text" id="actionTaken" placeholder="Default: flagged, saved screenshots, monitoring">
+                        <small>Leave blank for default</small>
+                    </div>
+
+                    <div class="template-section">
+                        <label>Custom Templates</label>
+                        <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                            <input type="text" id="templateName" placeholder="Template name" style="flex: 1;">
+                            <button class="btn btn-sm" onclick="saveTemplate()">💾 Save</button>
+                        </div>
+                        <div class="template-list" id="templateList"></div>
+                    </div>
+
+                    <button class="btn" onclick="generateReport()">Generate Report</button>
+                </div>
+            </div>
+
+            <!-- CENTER PANEL: Images & Output -->
+            <div class="center-panel">
+                <div class="panel-title">📷 Images & Output</div>
+                
+                <div class="form-group">
+                    <label>Upload Images *</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📷</div>
+                        <p><strong>Click or drag images</strong></p>
+                        <p style="font-size: 10px; color: #999;">Multiple images supported</p>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    </div>
+                </div>
+
+                <div class="images-gallery" id="imagesGallery"></div>
+
+                <div class="form-group">
+                    <label>Generated Report</label>
+                    <div class="report-output" id="reportOutput">No report generated yet...</div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-sm" onclick="copyReport()" style="flex: 1;">📋 Copy Report</button>
+                        <button class="btn btn-sm" onclick="sendToSlack()" style="flex: 1; background: #4A154B;">💬 Send to Slack</button>
+                    </div>
+                </div>
+
+                <div class="filename-list" id="filenameList" style="display: none;">
+                    <strong style="font-size: 12px;">📁 Generated Filenames:</strong>
+                    <div id="filenameItems"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: History -->
+            <div class="right-panel">
+                <div class="panel-title">📜 Report History (Today)</div>
+                <div class="history-list" id="historyList">
+                    <div style="text-align: center; padding: 20px; color: #999; font-size: 11px;">
+                        No reports yet today
+                    </div>
+                </div>
+                <button class="btn btn-sm" onclick="exportDailyReport()" style="margin-top: 10px;">📊 Export Day Report</button>
+                <button class="btn btn-sm" onclick="copyEmailDraft()" style="margin-top: 5px; background: #28a745;">📧 Copy Email Draft</button>
+                <button class="btn btn-sm" onclick="clearHistory()" style="margin-top: 5px; background: #dc3545;">🗑️ Clear History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annotation Canvas Modal -->
+    <div id="canvas-container">
+        <canvas id="annotation-canvas"></canvas>
+        <div class="canvas-toolbar">
+            <label>Color: <input type="color" id="drawColor" value="#ff0000"></label>
+            <label>Size: <input type="range" id="drawSize" min="1" max="10" value="3"></label>
+            <button class="btn btn-sm" onclick="clearCanvas()">Clear</button>
+            <button class="btn btn-sm" onclick="saveAnnotation()">Save</button>
+            <button class="btn btn-sm" onclick="closeCanvas()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Report History Modal -->
+    <div id="reportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: var(--modal-bg); border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: var(--text-primary);">Report Details</h2>
+                <button onclick="closeReportModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: var(--text-primary);">Report Summary (Paragraph Format)</label>
+                <div id="modalSummary" style="background: var(--report-output-bg); padding: 15px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 15px; font-size: 14px; line-height: 1.6; color: var(--text-primary);"></div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: var(--text-primary);">Full Report (Editable)</label>
+                <textarea id="modalReportText" rows="12" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; resize: vertical; background: var(--input-bg); color: var(--text-primary);"></textarea>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px; color: var(--text-primary);">Version History</label>
+                <div id="versionHistory" style="max-height: 150px; overflow-y: auto; background: var(--report-output-bg); padding: 10px; border-radius: 8px;"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-sm" onclick="copyModalReport()" style="background: #28a745;">📋 Copy Report</button>
+                <button class="btn btn-sm" onclick="saveEditedReport()" style="background: #667eea;">💾 Save Changes</button>
+                <button class="btn btn-sm" onclick="closeReportModal()" style="background: #6c757d;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Management
+        function setTheme(theme) {
+            localStorage.setItem('selectedTheme', theme);
+            applyTheme(theme);
+            updateThemeButtons(theme);
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            
+            if (theme === 'auto') {
+                // Use system preference
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                html.setAttribute('data-theme', theme);
+            }
+        }
+
+        function updateThemeButtons(theme) {
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (theme === 'light') {
+                document.getElementById('lightThemeBtn').classList.add('active');
+            } else if (theme === 'dark') {
+                document.getElementById('darkThemeBtn').classList.add('active');
+            } else {
+                document.getElementById('autoThemeBtn').classList.add('active');
+            }
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('selectedTheme') || 'auto';
+            applyTheme(savedTheme);
+            updateThemeButtons(savedTheme);
+            
+            // Listen for system theme changes when in auto mode
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                const currentTheme = localStorage.getItem('selectedTheme') || 'auto';
+                if (currentTheme === 'auto') {
+                    applyTheme('auto');
+                }
+            });
+        }
+
+        // Slack Webhook Configuration
+        // IMPORTANT: Set your Slack webhook URL here (kept private, not committed to git)
+        const SLACK_WEBHOOK_URL = localStorage.getItem('slackWebhookUrl') || '';
+        const SLACK_BOT_TOKEN = localStorage.getItem('slackBotToken') || '';
+        const SLACK_CHANNEL_ID = localStorage.getItem('slackChannelId') || 'C09T8N5J7PD';
+        
+        // Global state
+        let uploadedImages = [];
+        let currentAnnotationIndex = -1;
+        let isDrawing = false;
+        let ctx = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTheme();
+            loadTemplates();
+            loadHistory();
+            initializeEventListeners();
+            setTodayDate();
+        });
+
+        // Mobile Tab Switching
+        function switchMobileTab(tab) {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.left-panel, .center-panel, .right-panel').forEach(p => p.classList.remove('active'));
+            
+            // Add active class to selected tab and panel
+            if (tab === 'form') {
+                document.querySelector('.mobile-tab:nth-child(1)').classList.add('active');
+                document.querySelector('.left-panel').classList.add('active');
+            } else if (tab === 'output') {
+                document.querySelector('.mobile-tab:nth-child(2)').classList.add('active');
+                document.querySelector('.center-panel').classList.add('active');
+            } else if (tab === 'history') {
+                document.querySelector('.mobile-tab:nth-child(3)').classList.add('active');
+                document.querySelector('.right-panel').classList.add('active');
+            }
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateTaken').value = today;
+        }
+
+        function initializeEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const propertySelect = document.getElementById('property');
+            const issueSelect = document.getElementById('issue');
+            const dateTaken = document.getElementById('dateTaken');
+
+            // Upload area click
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#667eea';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#e0e0e0';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#e0e0e0';
+                const files = Array.from(e.dataTransfer.files);
+                handleFiles(files);
+            });
+
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFiles(files);
+            });
+
+            // Paste event listener for images
+            document.addEventListener('paste', (e) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+                
+                const files = [];
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        if (file) files.push(file);
+                    }
+                }
+                
+                if (files.length > 0) {
+                    e.preventDefault();
+                    handleFiles(files);
+                    
+                    // Visual feedback
+                    uploadArea.style.borderColor = '#28a745';
+                    uploadArea.style.background = '#d4edda';
+                    setTimeout(() => {
+                        uploadArea.style.borderColor = '#e0e0e0';
+                        uploadArea.style.background = '#f9f9f9';
+                    }, 500);
+                }
+            });
+
+            // Property change
+            propertySelect.addEventListener('change', function() {
+                const locationGroup = document.getElementById('locationGroup');
+                const locationSelect = document.getElementById('location');
+                if (this.value === 'Reserve') {
+                    locationGroup.style.display = 'block';
+                    locationSelect.setAttribute('required', 'required');
+                } else {
+                    locationGroup.style.display = 'none';
+                    locationSelect.removeAttribute('required');
+                    locationSelect.value = '';
+                }
+            });
+
+            // Issue change
+            issueSelect.addEventListener('change', function() {
+                const customIssueGroup = document.getElementById('customIssueGroup');
+                const actionsField = document.getElementById('analysis');
+                
+                if (this.value === 'Other') {
+                    customIssueGroup.style.display = 'block';
+                } else {
+                    customIssueGroup.style.display = 'none';
+                }
+
+                // Populate templates
+                if (this.value === 'Tailgating') {
+                    const property = document.getElementById('property').value;
+                    const locationVal = document.getElementById('location').value;
+                    const locationLabel = property === 'Reserve' && locationVal ? locationVal : (property || '[Location]');
+                    actionsField.value = `At [TIME], [NAME] entered the ${locationLabel} with 6 individuals.`;
+                } else if (this.value === 'Overstaying') {
+                    actionsField.value = 'At 7:42 PM, Steven Gray (Badge ID: 171030) accessed the lounge with one male companion. Both individuals are still in the lounge at the time of reporting';
+                } else if (this.value === 'Unauthorized Access') {
+                    actionsField.value = 'At 12:46 AM, Petr Shchepilov and another individual accessed the lounge.';
+                } else {
+                    actionsField.value = '';
+                }
+            });
+
+            // Date validation
+            dateTaken.addEventListener('change', validateDateTime);
+        }
+
+        function handleFiles(files) {
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imageData = {
+                            src: e.target.result,
+                            name: file.name,
+                            timestamp: null,
+                            annotated: false
+                        };
+                        uploadedImages.push(imageData);
+                        extractTimestamp(uploadedImages.length - 1);
+                        renderImages();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function renderImages() {
+            const gallery = document.getElementById('imagesGallery');
+            gallery.innerHTML = '';
+            
+            uploadedImages.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-item';
+                div.innerHTML = `
+                    <img src="${img.src}" alt="Image ${index + 1}">
+                    <button class="remove-img" onclick="removeImage(${index})">×</button>
+                    <button class="annotate-btn" onclick="openAnnotation(${index})">✏️ Draw</button>
+                    <div style="position: absolute; top: 30px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 3px 6px; border-radius: 3px; font-size: 9px;">
+                        ${img.timestamp || 'Processing...'}
+                    </div>
+                `;
+                gallery.appendChild(div);
+            });
+        }
+
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            renderImages();
+        }
+
+        function extractTimestamp(index) {
+            const img = uploadedImages[index];
+            Tesseract.recognize(img.src, 'eng').then(({ data: { text } }) => {
+                // Try multiple timestamp patterns
+                let timestampMatch = text.match(/\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:EST|EDT)?/i);
+                if (!timestampMatch) {
+                    timestampMatch = text.match(/\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?\s*(?:EST|EDT)?/i);
+                }
+                
+                if (timestampMatch) {
+                    uploadedImages[index].timestamp = timestampMatch[0].trim();
+                } else {
+                    uploadedImages[index].timestamp = 'N/A';
+                }
+                renderImages();
+                validateDateTime();
+            }).catch(err => {
+                console.error('OCR Error:', err);
+                uploadedImages[index].timestamp = 'Error';
+                renderImages();
+            });
+        }
+
+        function validateDateTime() {
+            const dateTaken = document.getElementById('dateTaken').value;
+            const warning = document.getElementById('timeWarning');
+            
+            if (!dateTaken) return;
+            
+            const selectedDate = new Date(dateTaken);
+            const today = new Date();
+            const diffTime = today - selectedDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 7) {
+                warning.style.display = 'block';
+                warning.innerHTML = '⚠️ Warning: Incident is more than 7 days old';
+            } else if (diffDays < 0) {
+                warning.style.display = 'block';
+                warning.innerHTML = '⚠️ Warning: Future date selected';
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+
+        function convertTo12Hour(timeString) {
+            timeString = timeString.replace(/EST|EDT/gi, '').trim();
+            
+            if (timeString.includes('AM') || timeString.includes('PM')) {
+                return timeString;
+            }
+            
+            const match = timeString.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                let hour = parseInt(match[1]);
+                const minute = match[2];
+                
+                const period = hour >= 12 ? 'PM' : 'AM';
+                if (hour > 12) hour -= 12;
+                if (hour === 0) hour = 12;
+                
+                return `${hour}:${minute} ${period}`;
+            }
+            
+            return timeString;
+        }
+
+        function determinePriority(timeString) {
+            const match = timeString.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                let hour = parseInt(match[1]);
+                
+                if (timeString.includes('PM') && hour !== 12) {
+                    hour += 12;
+                } else if (timeString.includes('AM') && hour === 12) {
+                    hour = 0;
+                }
+                
+                if (hour >= 23 || hour < 5) {
+                    return 'P2';
+                }
+            }
+            
+            return 'P3';
+        }
+
+        function generateReport() {
+            const property = document.getElementById('property').value;
+            const location = document.getElementById('location').value;
+            const dateTaken = document.getElementById('dateTaken').value;
+            const analysis = document.getElementById('analysis').value;
+            const issue = document.getElementById('issue').value;
+            const customIssue = document.getElementById('customIssue').value;
+            const actionTaken = document.getElementById('actionTaken').value;
+
+            // Validation
+            const requiresLocation = property === 'Reserve';
+            if (!property || !dateTaken || uploadedImages.length === 0 || !analysis || !issue) {
+                alert('Please fill in all required fields and upload at least one image');
+                return;
+            }
+            
+            if (requiresLocation && !location) {
+                alert('Please select a Location for Reserve property');
+                return;
+            }
+
+            // Get first image timestamp for priority
+            const firstTimestamp = uploadedImages[0].timestamp || '';
+            
+            // Determine issue title
+            let issueTitle = issue;
+            if (issue === 'Other' && customIssue.trim()) {
+                issueTitle = customIssue.trim();
+            }
+
+            // Convert timestamp and determine priority
+            const time12Hour = convertTo12Hour(firstTimestamp);
+            const priority = determinePriority(firstTimestamp);
+            
+            // Action taken
+            const action = actionTaken.trim() || 'flagged, saved screenshots, monitoring';
+            
+            // Build report
+            const locationText = property === 'Reserve' ? location : property;
+            const showPastTime = issue === 'Overstaying' || issue === 'Unauthorized Access';
+            let report = `${priority} - ${issueTitle} at ${locationText}${showPastTime ? ' past 11:00 PM' : ''}\n`;
+            report += `• Action taken - ${action}\n`;
+            report += `• Log Made:\n`;
+            
+            // Convert analysis to sub-bullet format - each line becomes a sub-bullet
+            const analysisLines = analysis.split('\n').filter(line => line.trim());
+            analysisLines.forEach(line => {
+                report += `    ○ ${line.trim()}\n`;
+            });
+            
+            // Remove trailing newline
+            report = report.trimEnd();
+
+            // Display report
+            document.getElementById('reportOutput').textContent = report;
+            
+            // Generate filenames for all images
+            generateFilenames(property, location, dateTaken, analysis);
+            
+            // Save to history
+            saveToHistory({
+                timestamp: new Date().toISOString(),
+                report: report,
+                property: property,
+                location: locationText,
+                issue: issueTitle,
+                imageCount: uploadedImages.length
+            });
+        }
+
+        function generateFilenames(property, location, dateTaken, description) {
+            const filenameList = document.getElementById('filenameList');
+            const filenameItems = document.getElementById('filenameItems');
+            
+            filenameList.style.display = 'block';
+            filenameItems.innerHTML = '';
+            
+            const locationPart = location ? location.replace(/\s+/g, '_') : property;
+            const words = description.trim().split(/\s+/);
+            let summary = words.slice(0, 4).join('_');
+            summary = summary.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_');
+            if (summary.length > 30) {
+                summary = summary.substring(0, 30);
+            }
+            
+            uploadedImages.forEach((img, index) => {
+                const suffix = uploadedImages.length > 1 ? `_${index + 1}` : '';
+                const filename = `${property}_${dateTaken}_${locationPart}_${summary}${suffix}.png`;
+                
+                const div = document.createElement('div');
+                div.className = 'filename-item';
+                div.textContent = filename;
+                filenameItems.appendChild(div);
+            });
+        }
+
+        function copyReport() {
+            const reportText = document.getElementById('reportOutput').textContent;
+            if (reportText === 'No report generated yet...') {
+                alert('No report to copy');
+                return;
+            }
+            
+            navigator.clipboard.writeText(reportText).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        // Send report to Slack
+        async function sendToSlack() {
+            // --- Validation ---
+            const reportText = document.getElementById('reportOutput').textContent;
+            if (!reportText || reportText === 'No report generated yet...') {
+                return showSlackError({ error: 'MISSING_REPORT', message: 'No report generated yet. Please generate a report first.' });
+            }
+
+            const currentWebhookUrl = localStorage.getItem('slackWebhookUrl');
+            if (!currentWebhookUrl) {
+                const webhookUrl = prompt('Please enter your Slack Webhook URL:\n\n(This will be saved locally and used for future reports)');
+                if (webhookUrl && webhookUrl.trim()) {
+                    localStorage.setItem('slackWebhookUrl', webhookUrl.trim());
+                    location.reload();
+                    return;
+                }
+                return showSlackError({ error: 'MISSING_WEBHOOK', message: 'Slack webhook URL is required to send reports.' });
+            }
+
+            let botToken = localStorage.getItem('slackBotToken');
+            if (!botToken) {
+                const inputToken = prompt('Please enter your Slack Bot Token (xoxb-...):\n\n(Required to upload images. Will be saved locally.)');
+                if (inputToken && inputToken.trim().startsWith('xoxb-')) {
+                    localStorage.setItem('slackBotToken', inputToken.trim());
+                    botToken = inputToken.trim();
+                } else if (inputToken) {
+                    return showSlackError({ error: 'INVALID_TOKEN', message: 'Invalid Slack Bot Token. Must start with xoxb-.' });
+                } else {
+                    return showSlackError({ error: 'MISSING_TOKEN', message: 'Slack Bot Token is required to upload images.' });
+                }
+            }
+
+            const channelId = localStorage.getItem('slackChannelId') || SLACK_CHANNEL_ID;
+            if (!channelId) {
+                return showSlackError({ error: 'MISSING_CHANNEL', message: 'Slack Channel ID is not configured.' });
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            const originalBg = btn.style.background;
+
+            const setStatus = (text, bg, disabled) => {
+                btn.textContent = text;
+                btn.style.background = bg;
+                btn.disabled = disabled;
+            };
+
+            setStatus('⏳ Sending...', originalBg, true);
+
+            try {
+                const CORS_PROXY = 'https://corsproxy.io/?url=';
+                const filenameElements = document.querySelectorAll('#filenameItems .filename-item');
+
+                // Build the report message text (used as initial_comment on the first image)
+                let messageText = "🚨 *Security Incident Report*\n\n";
+                messageText += "```\n" + reportText + "\n```\n";
+                messageText += `_Posted via Security Incident Reporter • ${new Date().toLocaleString()}_`;
+
+                if (uploadedImages.length === 0) {
+                    return showSlackError({ error: 'NO_IMAGE', message: 'No images uploaded. Please upload at least one image before sending.' });
+                }
+
+                // --- Step 1: Upload ALL images in PARALLEL and collect file_ids ---
+                setStatus('⏳ Uploading images...', originalBg, true);
+
+                const uploadResults = await Promise.all(uploadedImages.map(async (img, i) => {
+                    const generatedFilename = filenameElements[i]?.textContent?.trim() || img.name || `incident_image_${i + 1}.png`;
+
+                    // Convert base64 dataURL to Blob
+                    const res = await fetch(img.src);
+                    const blob = await res.blob();
+                    const fileSize = blob.size;
+                    const fileType = blob.type || 'image/png';
+
+                    // Step 1a: Get upload URL
+                    const uploadUrlRes = await fetch(`${CORS_PROXY}${encodeURIComponent(`https://slack.com/api/files.getUploadURLExternal?filename=${encodeURIComponent(generatedFilename)}&length=${fileSize}`)}`, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${botToken}` }
+                    });
+                    const uploadUrlData = await uploadUrlRes.json();
+
+                    if (!uploadUrlData.ok) {
+                        throw { error: 'UPLOAD_URL_FAILED', message: `Slack rejected upload URL request: ${uploadUrlData.error}` };
+                    }
+
+                    const { upload_url, file_id } = uploadUrlData;
+
+                    // Step 1b: Upload binary
+                    const uploadRes = await fetch(`${CORS_PROXY}${encodeURIComponent(upload_url)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': fileType },
+                        body: blob
+                    });
+
+                    if (!uploadRes.ok) {
+                        throw { error: 'UPLOAD_FAILED', message: `Failed to upload image ${i + 1} to Slack.` };
+                    }
+
+                    return { id: file_id, title: generatedFilename };
+                })).catch(err => {
+                    showSlackError(err);
+                    return null;
+                });
+
+                if (!uploadResults) return;
+                const fileIds = uploadResults;
+
+                // --- Step 2: Complete ALL uploads in ONE call → single message with report + all images ---
+                setStatus('⏳ Posting to Slack...', originalBg, true);
+
+                const completeRes = await fetch(`${CORS_PROXY}${encodeURIComponent('https://slack.com/api/files.completeUploadExternal')}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${botToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        files: fileIds,
+                        channel_id: channelId,
+                        initial_comment: messageText
+                    })
+                });
+
+                const completeData = await completeRes.json();
+                if (!completeData.ok) {
+                    return showSlackError({ error: 'COMPLETE_FAILED', message: `Failed to finalize upload: ${completeData.error}` });
+                }
+
+                // --- Success ---
+                setStatus('✓ Sent to Slack!', '#28a745', true);
+                setTimeout(() => setStatus(originalText, originalBg, false), 3000);
+
+            } catch (err) {
+                console.error('Slack error:', err);
+                showSlackError({ error: 'SLACK_WEBHOOK_FAILED', message: err.message });
+                setTimeout(() => setStatus(originalText, originalBg, false), 3000);
+            }
+        }
+
+        // Standardized error handler for Slack errors
+        function showSlackError(schema) {
+            console.error('[Slack Error]', JSON.stringify(schema));
+            alert(`❌ Slack Error\n\nCode: ${schema.error}\nReason: ${schema.message}`);
+            return null;
+        }
+
+        // Template Management
+        function saveTemplate() {
+            const templateName = document.getElementById('templateName').value.trim();
+            const analysis = document.getElementById('analysis').value.trim();
+            const actionTaken = document.getElementById('actionTaken').value.trim();
+            
+            if (!templateName) {
+                alert('Please enter a template name');
+                return;
+            }
+            
+            if (!analysis) {
+                alert('Please enter actions observed');
+                return;
+            }
+            
+            let templates = JSON.parse(localStorage.getItem('incidentTemplates') || '[]');
+            templates.push({
+                name: templateName,
+                analysis: analysis,
+                actionTaken: actionTaken
+            });
+            
+            localStorage.setItem('incidentTemplates', JSON.stringify(templates));
+            document.getElementById('templateName').value = '';
+            loadTemplates();
+        }
+
+        function loadTemplates() {
+            const templates = JSON.parse(localStorage.getItem('incidentTemplates') || '[]');
+            const templateList = document.getElementById('templateList');
+            
+            if (templates.length === 0) {
+                templateList.innerHTML = '<div style="padding: 10px; text-align: center; color: #999; font-size: 10px;">No saved templates</div>';
+                return;
+            }
+            
+            templateList.innerHTML = '';
+            templates.forEach((template, index) => {
+                const div = document.createElement('div');
+                div.className = 'template-item';
+                div.innerHTML = `
+                    <span onclick="applyTemplate(${index})" style="flex: 1; cursor: pointer;">${template.name}</span>
+                    <button class="delete-template" onclick="deleteTemplate(${index})">×</button>
+                `;
+                templateList.appendChild(div);
+            });
+        }
+
+        function applyTemplate(index) {
+            const templates = JSON.parse(localStorage.getItem('incidentTemplates') || '[]');
+            const template = templates[index];
+            
+            document.getElementById('analysis').value = template.analysis;
+            document.getElementById('actionTaken').value = template.actionTaken || '';
+        }
+
+        function deleteTemplate(index) {
+            let templates = JSON.parse(localStorage.getItem('incidentTemplates') || '[]');
+            templates.splice(index, 1);
+            localStorage.setItem('incidentTemplates', JSON.stringify(templates));
+            loadTemplates();
+        }
+
+        // History Management
+        function saveToHistory(reportData) {
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            
+            // Filter out old reports (keep only today's)
+            const today = new Date().toDateString();
+            history = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            
+            history.unshift(reportData);
+            localStorage.setItem('incidentHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            
+            // Filter only today's reports
+            history = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            
+            const historyList = document.getElementById('historyList');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 11px;">No reports yet today</div>';
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            history.forEach((item, index) => {
+                const time = new Date(item.timestamp).toLocaleTimeString();
+                
+                // Create paragraph summary from report
+                const summary = generateParagraphSummary(item.report);
+                
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `
+                    <div class="time">${time}</div>
+                    <div class="preview" style="font-size: 11px; line-height: 1.4;">${summary}</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 3px;">${item.imageCount} image(s) • Click to view/edit</div>
+                `;
+                div.onclick = () => openReportModal(index);
+                historyList.appendChild(div);
+            });
+        }
+        
+        function generateParagraphSummary(report) {
+            // Extract time and description from report
+            const lines = report.split('\n');
+            let timeInfo = '';
+            let description = '';
+            
+            // Find the line with time (AM/PM)
+            for (let line of lines) {
+                if (line.includes('AM') || line.includes('PM')) {
+                    const timeMatch = line.match(/At\s+(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeInfo = timeMatch[1];
+                    }
+                    // Get the description part
+                    description = line.replace(/^•\s*/, '').replace(/At\s+\d{1,2}:\d{2}\s*(?:AM|PM),?\s*/i, '').trim();
+                    break;
+                }
+            }
+            
+            // If we found time and description, format as paragraph
+            if (timeInfo && description) {
+                // Truncate if too long
+                if (description.length > 80) {
+                    description = description.substring(0, 80) + '...';
+                }
+                return `At ${timeInfo}, ${description}`;
+            }
+            
+            // Fallback to first 80 chars of report
+            return report.substring(0, 80) + '...';
+        }
+
+        let currentEditingIndex = -1;
+        
+        function openReportModal(index) {
+            currentEditingIndex = index;
+            const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            const item = todayHistory[index];
+            
+            // Generate paragraph summary
+            const summary = generateParagraphSummary(item.report);
+            document.getElementById('modalSummary').textContent = summary;
+            
+            // Load current report
+            document.getElementById('modalReportText').value = item.report;
+            
+            // Load version history
+            loadVersionHistory(item);
+            
+            // Show modal
+            document.getElementById('reportModal').style.display = 'flex';
+        }
+        
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+            currentEditingIndex = -1;
+        }
+        
+        function loadVersionHistory(item) {
+            const versionHistoryDiv = document.getElementById('versionHistory');
+            
+            if (!item.versions || item.versions.length === 0) {
+                versionHistoryDiv.innerHTML = '<div style="text-align: center; color: #999; font-size: 11px; padding: 10px;">No version history</div>';
+                return;
+            }
+            
+            versionHistoryDiv.innerHTML = '';
+            item.versions.forEach((version, index) => {
+                const versionDiv = document.createElement('div');
+                versionDiv.style.cssText = 'padding: 8px; margin-bottom: 5px; background: white; border-radius: 5px; font-size: 11px; border-left: 3px solid #667eea;';
+                
+                const timestamp = new Date(version.timestamp).toLocaleString();
+                versionDiv.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 3px;">Version ${index + 1} - ${timestamp}</div>
+                    <div style="color: #666; white-space: pre-wrap; max-height: 60px; overflow: hidden;">${version.report.substring(0, 100)}...</div>
+                    <button class="btn btn-sm" onclick="restoreVersion(${index})" style="margin-top: 5px; font-size: 10px; padding: 3px 8px;">Restore</button>
+                `;
+                versionHistoryDiv.appendChild(versionDiv);
+            });
+        }
+        
+        function restoreVersion(versionIndex) {
+            const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            const item = todayHistory[currentEditingIndex];
+            
+            if (item.versions && item.versions[versionIndex]) {
+                document.getElementById('modalReportText').value = item.versions[versionIndex].report;
+                alert('Version restored to editor. Click "Save Changes" to apply.');
+            }
+        }
+        
+        function copyModalReport() {
+            const reportText = document.getElementById('modalReportText').value;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert('✓ Report copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+        
+        function saveEditedReport() {
+            const newReportText = document.getElementById('modalReportText').value.trim();
+            
+            if (!newReportText) {
+                alert('Report cannot be empty');
+                return;
+            }
+            
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            
+            // Find the actual index in full history
+            let actualIndex = -1;
+            let todayCount = 0;
+            for (let i = 0; i < history.length; i++) {
+                if (new Date(history[i].timestamp).toDateString() === today) {
+                    if (todayCount === currentEditingIndex) {
+                        actualIndex = i;
+                        break;
+                    }
+                    todayCount++;
+                }
+            }
+            
+            if (actualIndex === -1) {
+                alert('Error finding report in history');
+                return;
+            }
+            
+            const item = history[actualIndex];
+            
+            // Initialize versions array if it doesn't exist
+            if (!item.versions) {
+                item.versions = [];
+            }
+            
+            // Save current version to history before updating
+            item.versions.unshift({
+                timestamp: new Date().toISOString(),
+                report: item.report
+            });
+            
+            // Keep only last 10 versions
+            if (item.versions.length > 10) {
+                item.versions = item.versions.slice(0, 10);
+            }
+            
+            // Update the report
+            item.report = newReportText;
+            item.lastEdited = new Date().toISOString();
+            
+            // Save back to localStorage
+            localStorage.setItem('incidentHistory', JSON.stringify(history));
+            
+            // Refresh displays
+            loadHistory();
+            loadVersionHistory(item);
+            
+            // Update summary
+            const summary = generateParagraphSummary(newReportText);
+            document.getElementById('modalSummary').textContent = summary;
+            
+            alert('✓ Report updated successfully!');
+        }
+        
+        function viewHistoryItem(index) {
+            const history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            const item = todayHistory[index];
+            
+            document.getElementById('reportOutput').textContent = item.report;
+        }
+
+        function clearHistory() {
+            if (confirm('Clear all history for today?')) {
+                localStorage.setItem('incidentHistory', '[]');
+                loadHistory();
+            }
+        }
+
+        function exportDailyReport() {
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            
+            if (todayHistory.length === 0) {
+                alert('No reports to export for today');
+                return;
+            }
+            
+            let exportText = `Security Incident Report - ${today}\n`;
+            exportText += `Total Incidents: ${todayHistory.length}\n`;
+            exportText += '='.repeat(60) + '\n\n';
+            
+            todayHistory.forEach((item, index) => {
+                const time = new Date(item.timestamp).toLocaleTimeString();
+                exportText += `[${index + 1}] ${time}\n`;
+                exportText += item.report + '\n';
+                exportText += '-'.repeat(60) + '\n\n';
+            });
+            
+            // Download as text file
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `security_report_${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyEmailDraft() {
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            
+            if (todayHistory.length === 0) {
+                alert('No reports to email for today');
+                return;
+            }
+            
+            // Get yesterday's date (date minus one) for subject
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const subjectDate = `${String(yesterday.getMonth() + 1).padStart(2, '0')}/${String(yesterday.getDate()).padStart(2, '0')}/${yesterday.getFullYear()}`;
+            
+            // Build email subject
+            const subject = `The Reserve, The Harrison & The Hermitage – Daily Overnight Summary – ${subjectDate}`;
+            
+            // Group reports by property
+            const reserveReports = [];
+            const harrisonReports = [];
+            const hermitageReports = [];
+            
+            todayHistory.forEach(item => {
+                if (item.property === 'Reserve') {
+                    reserveReports.push(item);
+                } else if (item.property === 'Harrison') {
+                    harrisonReports.push(item);
+                } else if (item.property === 'Hermitage') {
+                    hermitageReports.push(item);
+                }
+            });
+            
+            // Build email body with strict nested bullet format
+            let body = 'Hello Team,\n\nPlease see below for the incident report:\n\n';
+            
+            // The Reserve section
+            body += 'The Reserve:\n\n';
+            reserveReports.forEach((item, index) => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0];
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueTitle = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\spast.+$/, '').replace(/\sat\s.+$/, '').trim();
+                
+                // Extract the full description from "Log Made" or analysis
+                const logMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let description = '';
+                let timeInfo = '';
+                
+                if (logMatch) {
+                    description = logMatch.replace(/^•\s*/, '').trim();
+                    const timeMatch = description.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeInfo = timeMatch[0];
+                    }
+                }
+                
+                // Generate filenames for all images
+                const filenames = [];
+                for (let i = 0; i < (item.imageCount || 1); i++) {
+                    const suffix = item.imageCount > 1 ? `_${i + 1}` : '';
+                    filenames.push(`Reserve_${subjectDate.replace(/\//g, '-')}_${item.location?.replace(/\s+/g, '_') || 'Location'}${suffix}.png`);
+                }
+                
+                // Main bullet with full description
+                body += `    • ${priority} - ${issueTitle} - (${description})\n`;
+                body += `        ○ Location: ${item.location || 'The Reserve'}\n`;
+                body += `        ○ Date & Time: ${subjectDate} ${timeInfo}\n`;
+                body += `        ○ Action Taken: flagged, saved screenshot, monitoring, sent to reserve-security channel\n`;
+                body += `        ○ Clip/Screenshot: ${filenames.join(', ')}\n`;
+                body += `        ○ VA Name: \n\n`;
+            });
+            
+            // The Harrison section
+            body += 'The Harrison:\n\n';
+            harrisonReports.forEach((item, index) => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0];
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueTitle = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\spast.+$/, '').replace(/\sat\s.+$/, '').trim();
+                
+                const logMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let description = '';
+                let timeInfo = '';
+                
+                if (logMatch) {
+                    description = logMatch.replace(/^•\s*/, '').trim();
+                    const timeMatch = description.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeInfo = timeMatch[0];
+                    }
+                }
+                
+                const filenames = [];
+                for (let i = 0; i < (item.imageCount || 1); i++) {
+                    const suffix = item.imageCount > 1 ? `_${i + 1}` : '';
+                    filenames.push(`Harrison_${subjectDate.replace(/\//g, '-')}_${suffix}.png`);
+                }
+                
+                body += `    • ${priority} - ${issueTitle} - (${description})\n`;
+                body += `        ○ Location: ${item.location || 'The Harrison'}\n`;
+                body += `        ○ Date & Time: ${subjectDate} ${timeInfo}\n`;
+                body += `        ○ Action Taken: flagged, saved screenshot, monitoring\n`;
+                body += `        ○ Clip/Screenshot: ${filenames.join(', ')}\n`;
+                body += `        ○ VA Name: \n\n`;
+            });
+            
+            // The Hermitage section
+            body += 'The Hermitage:\n\n';
+            hermitageReports.forEach((item, index) => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0];
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueTitle = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\spast.+$/, '').replace(/\sat\s.+$/, '').trim();
+                
+                const logMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let description = '';
+                let timeInfo = '';
+                
+                if (logMatch) {
+                    description = logMatch.replace(/^•\s*/, '').trim();
+                    const timeMatch = description.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeInfo = timeMatch[0];
+                    }
+                }
+                
+                const filenames = [];
+                for (let i = 0; i < (item.imageCount || 1); i++) {
+                    const suffix = item.imageCount > 1 ? `_${i + 1}` : '';
+                    filenames.push(`Hermitage_${subjectDate.replace(/\//g, '-')}_${suffix}.png`);
+                }
+                
+                body += `    • ${priority} - ${issueTitle} - (${description})\n`;
+                body += `        ○ Location: ${item.location || 'The Hermitage'}\n`;
+                body += `        ○ Date & Time: ${subjectDate} ${timeInfo}\n`;
+                body += `        ○ Action Taken: flagged, saved screenshot, monitoring\n`;
+                body += `        ○ Clip/Screenshot: ${filenames.join(', ')}\n`;
+                body += `        ○ VA Name: \n\n`;
+            });
+            
+            // Combine subject and body
+            const fullEmail = `SUBJECT: ${subject}\n\n${body}`;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(fullEmail).then(() => {
+                alert('✓ Email draft copied to clipboard!\n\nSubject and body are ready to paste into your email client.');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        function emailDailyReport() {
+            let history = JSON.parse(localStorage.getItem('incidentHistory') || '[]');
+            const today = new Date().toDateString();
+            const todayHistory = history.filter(h => new Date(h.timestamp).toDateString() === today);
+            
+            if (todayHistory.length === 0) {
+                alert('No reports to email for today');
+                return;
+            }
+            
+            // Get yesterday's date (date minus one) for subject
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const subjectDate = `${String(yesterday.getMonth() + 1).padStart(2, '0')}/${String(yesterday.getDate()).padStart(2, '0')}/${yesterday.getFullYear()}`;
+            
+            // Build email subject
+            const subject = `The Reserve, The Harrison & The Hermitage – Daily Overnight Summary – ${subjectDate}`;
+            
+            // Group reports by property
+            const reserveReports = [];
+            const harrisonReports = [];
+            const hermitageReports = [];
+            
+            todayHistory.forEach(item => {
+                if (item.property === 'Reserve') {
+                    reserveReports.push(item);
+                } else if (item.property === 'Harrison') {
+                    harrisonReports.push(item);
+                } else if (item.property === 'Hermitage') {
+                    hermitageReports.push(item);
+                }
+            });
+            
+            // Build email body with strict format
+            let body = 'Hello Team,\n\nPlease see below for the incident report:\n\n';
+            
+            // The Reserve section
+            body += 'The Reserve:\n';
+            reserveReports.forEach(item => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0]; // e.g., "P2 - Unauthorized access at..."
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueText = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\sat\s.+$/, '').trim();
+                
+                // Extract details from analysis
+                const analysisMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let timeRange = '';
+                let description = item.report;
+                
+                if (analysisMatch) {
+                    const timeMatch = analysisMatch.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeRange = timeMatch[0];
+                    }
+                    description = analysisMatch.replace(/^•\s*/, '').trim();
+                }
+                
+                // Extract date from stored data or use subject date
+                const incidentDate = subjectDate;
+                
+                // Generate filename from stored data
+                const filename = `${item.property}_screenshot_${Date.now()}.png`;
+                
+                body += `* [${priority}] - ${issueText} (${description})\n`;
+                body += `* Location: ${item.location || 'N/A'}\n`;
+                body += `* Date & Time: ${incidentDate} From ${timeRange} to ${timeRange}\n`;
+                body += `* Action Taken: flagged, saved screenshot, monitoring, sent to reserve-security channel\n`;
+                body += `Clip/Screenshot: ${filename}\n`;
+                body += `VA Name: \n\n`;
+            });
+            body += '\n';
+            
+            // The Harrison section
+            body += 'The Harrison:\n';
+            harrisonReports.forEach(item => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0];
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueText = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\sat\s.+$/, '').trim();
+                
+                const analysisMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let timeRange = '';
+                let description = item.report;
+                
+                if (analysisMatch) {
+                    const timeMatch = analysisMatch.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeRange = timeMatch[0];
+                    }
+                    description = analysisMatch.replace(/^•\s*/, '').trim();
+                }
+                
+                const incidentDate = subjectDate;
+                const filename = `${item.property}_screenshot_${Date.now()}.png`;
+                
+                body += `* [${priority}] - ${issueText} (${description})\n`;
+                body += `* Location: ${item.location || 'N/A'}\n`;
+                body += `* Date & Time: ${incidentDate} From ${timeRange} to ${timeRange}\n`;
+                body += `* Action Taken: flagged, saved screenshot, monitoring\n`;
+                body += `Clip/Screenshot: ${filename}\n`;
+                body += `VA Name: \n\n`;
+            });
+            body += '\n';
+            
+            // The Hermitage section
+            body += 'The Hermitage:\n';
+            hermitageReports.forEach(item => {
+                const reportLines = item.report.split('\n');
+                const priorityLine = reportLines[0];
+                const priority = priorityLine.match(/P\d+/)?.[0] || 'P3';
+                const issueText = priorityLine.replace(/P\d+\s*-\s*/, '').replace(/\sat\s.+$/, '').trim();
+                
+                const analysisMatch = reportLines.find(line => line.includes('AM') || line.includes('PM'));
+                let timeRange = '';
+                let description = item.report;
+                
+                if (analysisMatch) {
+                    const timeMatch = analysisMatch.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/i);
+                    if (timeMatch) {
+                        timeRange = timeMatch[0];
+                    }
+                    description = analysisMatch.replace(/^•\s*/, '').trim();
+                }
+                
+                const incidentDate = subjectDate;
+                const filename = `${item.property}_screenshot_${Date.now()}.png`;
+                
+                body += `* [${priority}] - ${issueText} (${description})\n`;
+                body += `* Location: ${item.location || 'N/A'}\n`;
+                body += `* Date & Time: ${incidentDate} From ${timeRange} to ${timeRange}\n`;
+                body += `* Action Taken: flagged, saved screenshot, monitoring\n`;
+                body += `Clip/Screenshot: ${filename}\n`;
+                body += `VA Name: \n\n`;
+            });
+            
+            // Encode for mailto link
+            const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+        }
+
+        // Image Annotation
+        function openAnnotation(index) {
+            currentAnnotationIndex = index;
+            const canvasContainer = document.getElementById('canvas-container');
+            const canvas = document.getElementById('annotation-canvas');
+            ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                // Setup drawing
+                canvas.onmousedown = startDrawing;
+                canvas.onmousemove = draw;
+                canvas.onmouseup = stopDrawing;
+                canvas.onmouseout = stopDrawing;
+            };
+            img.src = uploadedImages[index].src;
+            
+            canvasContainer.style.display = 'flex';
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const canvas = document.getElementById('annotation-canvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Account for canvas scaling
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const canvas = document.getElementById('annotation-canvas');
+            const rect = canvas.getBoundingClientRect();
+            const color = document.getElementById('drawColor').value;
+            const size = document.getElementById('drawSize').value;
+            
+            // Account for canvas scaling
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('annotation-canvas');            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+            img.src = uploadedImages[currentAnnotationIndex].src;
+        }
+
+        function saveAnnotation() {
+            const canvas = document.getElementById('annotation-canvas');
+            uploadedImages[currentAnnotationIndex].src = canvas.toDataURL();
+            uploadedImages[currentAnnotationIndex].annotated = true;
+            renderImages();
+            closeCanvas();
+        }
+
+        function closeCanvas() {
+            document.getElementById('canvas-container').style.display = 'none';
+            currentAnnotationIndex = -1;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
