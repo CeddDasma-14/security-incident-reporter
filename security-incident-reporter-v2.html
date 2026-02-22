@@ -1164,7 +1164,10 @@
 
                 // Populate templates
                 if (this.value === 'Tailgating') {
-                    actionsField.value = 'At 9:12 PM, Lashawn Simmons entered the E125 Main Door with 6 individuals.';
+                    const property = document.getElementById('property').value;
+                    const locationVal = document.getElementById('location').value;
+                    const locationLabel = property === 'Reserve' && locationVal ? locationVal : (property || '[Location]');
+                    actionsField.value = `At [TIME], [NAME] entered the ${locationLabel} with 6 individuals.`;
                 } else if (this.value === 'Overstaying') {
                     actionsField.value = 'At 7:42 PM, Steven Gray (Badge ID: 171030) accessed the lounge with one male companion. Both individuals are still in the lounge at the time of reporting';
                 } else if (this.value === 'Unauthorized Access') {
@@ -1347,7 +1350,8 @@
             
             // Build report
             const locationText = property === 'Reserve' ? location : property;
-            let report = `${priority} - ${issueTitle} at ${locationText} past 11:00 PM\n`;
+            const showPastTime = issue === 'Overstaying' || issue === 'Unauthorized Access';
+            let report = `${priority} - ${issueTitle} at ${locationText}${showPastTime ? ' past 11:00 PM' : ''}\n`;
             report += `• Action taken - ${action}\n`;
             report += `• Log Made:\n`;
             
